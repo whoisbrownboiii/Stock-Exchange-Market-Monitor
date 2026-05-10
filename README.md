@@ -28,7 +28,7 @@ String formatting
 <img width="451" height="706" alt="image" src="https://github.com/user-attachments/assets/f5a48260-a0aa-4e80-96a3-17aa121335a2" />
 
 
-#Stock-Exchange-Market-Monitor (10/05)
+# Stock-Exchange-Market-Monitor (10/05)
 
 Updated Description
 
