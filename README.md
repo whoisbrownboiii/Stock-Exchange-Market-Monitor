@@ -62,7 +62,7 @@ The watchlist manager and sector viewer are integrated as standalone interactive
 <img width="451" height="682" alt="image" src="https://github.com/user-attachments/assets/b7d659e6-150f-436d-987f-cdfc36115183" />
 
 
-DESCRIPTION OF TESTING PROCESS (17/05)
+#DESCRIPTION OF TESTING PROCESS (17/05)
 
 Testing Process
 Testing was carried out alongside implementation rather than at the end. Each tool was tested individually as it was built, and the full pipeline was tested end to end after each major addition. Three methods were used.
