@@ -61,3 +61,66 @@ The watchlist manager and sector viewer are integrated as standalone interactive
 
 <img width="451" height="682" alt="image" src="https://github.com/user-attachments/assets/b7d659e6-150f-436d-987f-cdfc36115183" />
 
+
+DESCRIPTION OF TESTING PROCESS (17/05)
+
+Testing Process
+Testing was carried out alongside implementation rather than at the end. Each tool was tested individually as it was built, and the full pipeline was tested end to end after each major addition. Three methods were used.
+The first was a formal automated test suite written in tests/test_system.py using pytest, covering 33 test cases across the Calculator, Alert Tool, File Writer, Yahoo Finance, and FRED API tools. All external API calls are mocked using unittest.mock so tests run without internet or real API keys and produce consistent results every time. Run with pytest tests/test_system.py -v.
+The second was live integration testing, where the system was run with real API keys against real market data. Console output and saved CSV reports were inspected after each run to confirm prices were fetched, calculations were correct, and alerts fired at the right thresholds.
+The third was deliberate error testing. API keys were removed, invalid tickers were passed, and empty price histories were provided to confirm the system continued running gracefully in every case.
+
+All 33 automated tests in tests/test_system.py passed successfully when run with pytest tests/test_system.py -v. These tests cover the Calculator Tool, Alert Tool, File Writer, Yahoo Finance tool, and FRED API tool, with all external calls mocked so no live internet connection was needed.
+During live integration testing the following real errors were encountered and resolved:
+Error 1 — Yahoo Finance DataFrame structure When fetching historical prices, the system crashed with the error 'DataFrame' object has no attribute 'tolist'. This was caused by a newer version of yfinance returning a MultiIndex column structure instead of a flat one. The fix was to detect and flatten the column structure before extracting the Close column.
+Error 2 — Generative AI package deprecation The google.generativeai package produced a warning during runtime that all support had ended and it would no longer receive updates or bug fixes. The warning stated the package was fully deprecated and that the system must switch to google-genai as soon as possible. This required rewriting the Gemini integration from scratch, replacing import google.generativeai as genai and genai.configure() with the new from google import genai and genai.Client() pattern, and updating every function that called the model.
+Error 3 — Generative AI model failures and unavailability Multiple Gemini model names failed with 404 errors during testing. The model gemini-1.5-flash-latest returned a 404 stating it was not found for the API version. The model gemini-2.0-flash returned a 404 stating it was no longer available to new users. The model gemini-2.0-flash-001 returned the same error. Each failure required identifying which models were actually available by running client.models.list() to print all accessible models, and updating the model name in the code accordingly. The final working model was gemini-2.5-pro.
+Error 4 — AI chat text extraction issues When the stock search chat was tested with natural language queries such as "What is the stock price of Amazon", the system incorrectly extracted common English words as ticker symbols and attempted to look up stocks called STOCK, PRICE, and OF. This produced 404 errors from Yahoo Finance for each invalid ticker. The fix required adding a company name to ticker dictionary mapping over 50 major companies by their common name to their correct ticker symbol, and adding a large exclusion list of common English words that should never be treated as tickers. This allowed the system to correctly identify Amazon as AMZN from natural language without requiring the user to know the ticker symbol.
+Error 5 — FRED API returning blank key The FRED API was returning 400 Bad Request errors because the API key was empty in the URL. This was caused by the .env file either not existing or not being loaded correctly. The fix was to ensure python-dotenv was installed and that the .env file was present in the correct project folder with the actual API key filled in.
+Error 6 — Stock search ModuleNotFoundError When option 2 was selected from the main menu, the system threw ModuleNotFoundError: No module named 'stock_chat'. This was because stock_chat.py had not been placed in the correct folder. The fix was to ensure the file was saved in the root project folder alongside main.py and that the sys.path included the correct directory.
+Conclusion All core functionality works correctly after resolving the above errors. Live prices are fetched, moving averages and alerts are calculated accurately, reports are saved to CSV, and the AI chat responds with relevant analysis. The generative AI integration required the most troubleshooting due to rapid deprecation of packages and models during the development period, which demonstrated the importance of testing against live APIs regularly rather than assuming they remain stable. All errors were identified through live testing and resolved, improving the robustness and reliability of the final system.
+
+Test Scenarios
+Scenario 1 — SMA with sufficient data Twenty identical closing prices of 100.00 are passed to the Calculator. Expected output is an SMA of 100.00, confirming the formula is correct when exactly 20 data points are available.
+Scenario 2 — SMA with insufficient data Only 15 closing prices are provided. Expected output is None, confirming the system refuses to calculate a meaningless average.
+Scenario 3 — Percentage change on a price drop Current price 190.00, previous close 200.00. Expected output is -5.0%, confirming the formula handles falling prices correctly.
+Scenario 4 — Percentage change with zero previous close Previous close set to zero. Expected output is None, confirming no division by zero occurs.
+Scenario 5 — Alert fires when threshold is breached Percentage change is -6.0% against a threshold of 5.0%. Expected output is an alert object with type set to drop.
+Scenario 6 — No alert below threshold Percentage change is -2.0% and SMA deviation is -1.0%, both within thresholds. Expected output is None.
+Scenario 7 — Severity downgraded for market-wide move Percentage change is -6.0% and sector ETF also fell -5.5%. Expected output is a downgraded severity level.
+Scenario 8 — Company-specific alert flagged correctly Percentage change is -6.0% but sector ETF only fell -0.3%. Expected output is context reading company-specific move.
+Scenario 9 — CSV report created with correct data A session summary with one ticker row is passed to the File Writer. Expected output is a timestamped CSV in the output directory with correct values.
+Scenario 10 — Yahoo Finance returns None for invalid ticker Mocked response returns no price data. Expected output is that the ticker is skipped without crashing.
+Scenario 11 — FRED API returns None on network failure A network exception is raised. Expected output is that the indicator is set to None and the session continues.
+Scenario 12 — Alert tool handles None calculator values All calculator values are None due to insufficient history. Expected output is no alert and no crash.
+
+
+
+Deployment Preparation
+The system runs locally from the command line with no server or database required. To deploy on any machine three steps are needed.
+Install dependencies:
+bash
+pip install -r requirements.txt
+Create the environment file:
+bash
+cp .env.example .env
+Fill in .env with your API keys:
+GEMINI_API_KEY=your_key
+FRED_API_KEY=your_key
+WATCHLIST=AAPL,TSLA,MSFT
+ALERT_THRESHOLD=5.0
+SMA_DEVIATION_THRESHOLD=3.0
+POLL_INTERVAL=300
+OUTPUT_DIR=output
+Run the system:
+bash
+python main.py
+The program starts with a greeting and an interactive menu. Reports are saved automatically to the output/ folder.
+Data Conversion and Transformation
+Yahoo Finance returns raw JSON through yfinance. Live price data is extracted and converted to rounded floats stored in Python dictionaries. Historical data arrives as a pandas DataFrame which is flattened, cleaned with dropna(), and converted to a plain Python list of floats for the Calculator.
+FRED returns JSON with an observations array. The most recent value is extracted as a string and converted to a float. Invalid entries return None.
+Before each Gemini call, live prices, historical data, macro indicators, and sector ETF returns are merged into a single dictionary and serialised to JSON using json.dumps(). Gemini's response returns as plain text and is stored directly in the session summary.
+At the end of each session the summary is written to CSV using csv.DictWriter. Each dictionary becomes one row, booleans write as True or False, and None values appear as empty cells. CSV was chosen because it opens directly in Excel with no conversion needed.
+<img width="468" height="642" alt="image" src="https://github.com/user-attachments/assets/1c90d294-64cb-4a2b-9b3f-05d266c4bdf4" />
+
+
