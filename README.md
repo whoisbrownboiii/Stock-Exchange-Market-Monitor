@@ -1,168 +1,230 @@
-# Stock-Exchange-Market-Monitor (24/04)
-An AI and Agent-based Stock Exchange Market Monitor system that allows a user to check what stocks to invest and see how the market is performing currently.
+# Stock Monitoring Agent
 
-AI AND AGENT-BASED PYTHON SYSTEM
+A Python system that monitors live stock prices, computes moving averages,
+evaluates alerts against user-defined thresholds, and saves timestamped
+session reports. Gemini AI provides contextual interpretation of each price
+move against macroeconomic indicators and sector ETF returns.
 
-TASK: STOCK EXCHANGE MARKET MONITOR
+---
 
-The planned system to be developed will be a stock exchange monitor that is able to monitor current stock prices on the stock exchange market and be able to provide information on past and current trends to help predict future decisions on what is worth investing in and what is not. The goal is to help anyone that is looking to buy and sell stocks to be able to strategize and make concrete decisions on what they will decide to invest in with the help of the system’s intelligence architecture.
-The approach being used is the AI-based approach will be single intelligent agent that follows reasons loop that receives user queries and decided what tools to call to retrieve and calculate stock data and return a natural human-like language response. It which provide a well refined analysis and report on what is currently happening in real time and previously in the stock market. It will be able to use tools that will retrieve the data from the market, calculate the data and respond seamlessly like one is asking for assistance from a help desk.
-Tools being used: 
-Claude AI, ChatGPT – AI brain decides to which tools to call and interprets results
-Yahoo Finance API – Live Stock Prices Source
-Calculator Tool – Computation brain that calculates the moving average, changes and thresholds
-File Writer – Saves reports
-Alert tool – Flags drops and increases in stocks
+## Project Structure
 
-Programming Concepts:
-Functions
-APIs and HTTP requests
-Loops
-File I/O
-Classes or dictionaries
-Error handling
-Environment variables
-JSON handling
-Conditionals and logic
-String formatting
-<img width="451" height="706" alt="image" src="https://github.com/user-attachments/assets/f5a48260-a0aa-4e80-96a3-17aa121335a2" />
+```
+stock_agent/
+├── main.py                      # Entry point
+├── agent.py                     # Gemini AI orchestrator — runs the full session loop
+├── config.py                    # Loads environment variables and configuration
+├── chat.py                      # Interactive AI chat mode
+├── watchlist_manager.py         # Add and manage stocks on your watchlist
+├── requirements.txt             # Python dependencies
+├── .env.example                 # Environment variable template
+├── .gitignore                   # Files excluded from version control
+├── tools/
+│   ├── yahoo_finance.py         # Tool 1 — live prices and historical data
+│   ├── fred_api.py              # Tool 2 — macroeconomic indicators (FRED)
+│   ├── calculator.py            # Tool 3 — SMA, pct change, SMA deviation
+│   ├── alert.py                 # Tool 4 — threshold evaluation and severity
+│   ├── file_writer.py           # Tool 5 — CSV report writer
+│   ├── sector_viewer.py         # Tool 6 — browse stocks by sector
+│   └── trending_stocks.py      # Tool 7 — popular and trending stocks
+├── tests/
+│   └── test_system.py           # Full test suite (33 tests)
+└── output/                      # Session reports saved here (auto-created)
+```
 
+---
 
-# Stock-Exchange-Market-Monitor (10/05)
+## Setup
 
-Updated Description
+### 1. Install dependencies
 
-SECOND REPORT:
-
-The system has undergone a few changes during the implementation progress as major changes have been made on to the code and additional features such as adding the ability to add stock that you want to monitor, additional AI assisted features to help you conversate deeply to provide more depth in terms on managing a users’ portfolio. The refined list of programming concepts are:
-Functions,
-APIs, 
-Classes, 
-Error handling, 
-Environment variables, 
-Conditionals and logic.
-
-Updated System Description
-
-The Stock Monitoring Agent was originally designed as a straightforward price monitoring tool that would fetch live stock prices, calculate moving averages, and save alerts to a report. During implementation the system grew significantly beyond that original scope. Three major additions were made. First, an interactive watchlist manager was built so users can add and remove stocks themselves rather than editing a configuration file manually. Second, a sector browser was added that lets users explore ten market sectors, see how every stock in that sector is performing in real time, and add any of them directly to their watchlist. Third, an AI-powered chat mode was introduced using the Gemini API, allowing users to have a conversation about their portfolio, ask which stocks are performing well or poorly, and get contextual analysis that factors in macroeconomic indicators and sector trends. The core monitoring loop, Calculator Tool, Alert Tool, and File Writer remain from the original design, but the system is now interactive rather than purely automated.
-
-Refined Programming Concepts and How They Are Applied
-Functions are the primary building block of the entire system. Every tool is wrapped in a named function with a single clear purpose. For example, get_live_prices() fetches Yahoo Finance data for the watchlist, calculate_sma() computes the 20-day moving average, evaluate_alert() checks whether a threshold has been breached, and write_report() saves the session CSV. The agent calls these functions in sequence each session, passing the output of one directly as the input of the next. The chat module uses ask_gemini() and build_system_prompt() as functions that prepare and send data to the AI. The watchlist manager uses load_watchlist(), save_watchlist(), add_stocks_manually(), and add_from_trending() to keep each action separate and reusable.
-APIs are used at four points in the system. The Yahoo Finance API, accessed through the yfinance library, provides live prices, previous closing prices, trading volume, and 30 days of historical closing data for every stock on the watchlist. It is also used to fetch sector ETF returns, for example XLK for Technology stocks, which give the system a market-wide benchmark to compare individual stock movements against. The FRED API, accessed using the requests library, fetches three macroeconomic indicators once per session — the federal funds rate, the CPI, and the 10-year Treasury yield. These are included in every report row and passed to the AI so it can factor interest rate and inflation context into its analysis. The Gemini API, accessed through the google-generativeai library, powers both the per-ticker analysis in the monitoring session and the full conversational chat mode. Each API call is isolated in its own function so if one fails the rest of the system continues running.
-Classes are used indirectly through the libraries. The Config class in config.py centralises all system settings — the watchlist, alert thresholds, poll interval, API keys, and sector ETF mappings — and makes them available throughout the codebase as typed attributes rather than scattered variables. The genai.GenerativeModel class from the Gemini library is instantiated once and reused across all AI calls. The OpenAI client class was used in the original implementation before the switch to Gemini. Dictionaries are used extensively as lightweight data structures to represent each ticker's state, for example holding the current price, moving average, percentage change, sector return, and alert result together in one object that is passed between tools.
-Error handling is applied at every external call in the system using try/except blocks. If Yahoo Finance returns no data for a ticker, that ticker is skipped and the loop continues for the rest of the watchlist. If the FRED API is unreachable, macro values are set to None and the session proceeds without them rather than crashing. If the Gemini API call fails, a fallback message is recorded and execution continues. This approach was important during development because several errors occurred in real testing, including Yahoo Finance returning a differently structured DataFrame in newer library versions and Gemini returning 404 errors for deprecated model names. The error handling meant the system continued producing reports and alerts even while individual tools were being fixed.
-Environment variables are used to store all credentials and user configuration outside the codebase. The .env file holds the Gemini API key, the FRED API key, the watchlist, the alert thresholds, the poll interval, and the output directory. These are loaded at startup using the python-dotenv library and accessed through the Config class. The watchlist manager writes back to the .env file using set_key() when the user saves changes, so the updated watchlist is automatically used the next time the system runs. This means no sensitive credentials or personal settings ever appear in the source code.
-Conditionals and logic drive the two most important decisions in the system. In the Alert Tool, an if statement checks whether the percentage change exceeds the user's threshold or whether the price has deviated too far from the 20-day moving average. A second condition then checks the sector ETF return — if the sector moved by a similar amount on the same day, the severity is downgraded because the move is likely market-wide rather than company-specific. In the sector viewer, conditionals translate a raw percentage change into a plain-English performance rating: anything above 3% is labelled Strong Buy, between 1% and 3% is Performing Well, between -1% and 1% is Neutral, between -3% and -1% is Underperforming, and below -3% is a Heavy Drop. In the watchlist manager, conditionals handle whether the user chose to add stocks by number, by name, or by selecting all, and whether those stocks are already in the watchlist before adding them.
-Tool Integration
-The tools are integrated in a layered pipeline where each tool's output feeds directly into the next. At the start of each session the agent calls the FRED API tool once to get macroeconomic context, then calls the Yahoo Finance tool to get live prices and historical data for every ticker. For each ticker it fetches the sector ETF return from Yahoo Finance, merges all three data sources into a single JSON payload, and sends it to Gemini for contextual analysis. The Calculator Tool then receives the live price and historical array and returns the three computed values. Those values go to the Alert Tool alongside the user's thresholds and the sector return, which decides whether to fire an alert and at what severity. Finally the File Writer receives the complete session summary from the agent and all alert objects and saves everything to a timestamped CSV.
-The watchlist manager and sector viewer are integrated as standalone interactive modes that run before the monitoring session. They write their output back to the .env file so the agent always reads the most up-to-date watchlist when it runs. The chat mode is integrated as a separate session that loads the same live data the monitoring session would use, builds a system prompt from it, and passes it to Gemini so the AI has full context about the current state of every stock on the watchlist when answering the user's questions.
-
-
-
-<img width="451" height="682" alt="image" src="https://github.com/user-attachments/assets/b7d659e6-150f-436d-987f-cdfc36115183" />
-
-
-# DESCRIPTION OF TESTING PROCESS (17/05)
-
-Testing Process
-Testing was carried out alongside implementation rather than at the end. Each tool was tested individually as it was built, and the full pipeline was tested end to end after each major addition. Three methods were used.
-The first was a formal automated test suite written in tests/test_system.py using pytest, covering 33 test cases across the Calculator, Alert Tool, File Writer, Yahoo Finance, and FRED API tools. All external API calls are mocked using unittest.mock so tests run without internet or real API keys and produce consistent results every time. Run with pytest tests/test_system.py -v.
-The second was live integration testing, where the system was run with real API keys against real market data. Console output and saved CSV reports were inspected after each run to confirm prices were fetched, calculations were correct, and alerts fired at the right thresholds.
-The third was deliberate error testing. API keys were removed, invalid tickers were passed, and empty price histories were provided to confirm the system continued running gracefully in every case.
-
-All 33 automated tests in tests/test_system.py passed successfully when run with pytest tests/test_system.py -v. These tests cover the Calculator Tool, Alert Tool, File Writer, Yahoo Finance tool, and FRED API tool, with all external calls mocked so no live internet connection was needed.
-During live integration testing the following real errors were encountered and resolved:
-Error 1 — Yahoo Finance DataFrame structure When fetching historical prices, the system crashed with the error 'DataFrame' object has no attribute 'tolist'. This was caused by a newer version of yfinance returning a MultiIndex column structure instead of a flat one. The fix was to detect and flatten the column structure before extracting the Close column.
-Error 2 — Generative AI package deprecation The google.generativeai package produced a warning during runtime that all support had ended and it would no longer receive updates or bug fixes. The warning stated the package was fully deprecated and that the system must switch to google-genai as soon as possible. This required rewriting the Gemini integration from scratch, replacing import google.generativeai as genai and genai.configure() with the new from google import genai and genai.Client() pattern, and updating every function that called the model.
-Error 3 — Generative AI model failures and unavailability Multiple Gemini model names failed with 404 errors during testing. The model gemini-1.5-flash-latest returned a 404 stating it was not found for the API version. The model gemini-2.0-flash returned a 404 stating it was no longer available to new users. The model gemini-2.0-flash-001 returned the same error. Each failure required identifying which models were actually available by running client.models.list() to print all accessible models, and updating the model name in the code accordingly. The final working model was gemini-2.5-pro.
-Error 4 — AI chat text extraction issues When the stock search chat was tested with natural language queries such as "What is the stock price of Amazon", the system incorrectly extracted common English words as ticker symbols and attempted to look up stocks called STOCK, PRICE, and OF. This produced 404 errors from Yahoo Finance for each invalid ticker. The fix required adding a company name to ticker dictionary mapping over 50 major companies by their common name to their correct ticker symbol, and adding a large exclusion list of common English words that should never be treated as tickers. This allowed the system to correctly identify Amazon as AMZN from natural language without requiring the user to know the ticker symbol.
-Error 5 — FRED API returning blank key The FRED API was returning 400 Bad Request errors because the API key was empty in the URL. This was caused by the .env file either not existing or not being loaded correctly. The fix was to ensure python-dotenv was installed and that the .env file was present in the correct project folder with the actual API key filled in.
-Error 6 — Stock search ModuleNotFoundError When option 2 was selected from the main menu, the system threw ModuleNotFoundError: No module named 'stock_chat'. This was because stock_chat.py had not been placed in the correct folder. The fix was to ensure the file was saved in the root project folder alongside main.py and that the sys.path included the correct directory.
-Conclusion All core functionality works correctly after resolving the above errors. Live prices are fetched, moving averages and alerts are calculated accurately, reports are saved to CSV, and the AI chat responds with relevant analysis. The generative AI integration required the most troubleshooting due to rapid deprecation of packages and models during the development period, which demonstrated the importance of testing against live APIs regularly rather than assuming they remain stable. All errors were identified through live testing and resolved, improving the robustness and reliability of the final system.
-
-Test Scenarios
-Scenario 1 — SMA with sufficient data Twenty identical closing prices of 100.00 are passed to the Calculator. Expected output is an SMA of 100.00, confirming the formula is correct when exactly 20 data points are available.
-Scenario 2 — SMA with insufficient data Only 15 closing prices are provided. Expected output is None, confirming the system refuses to calculate a meaningless average.
-Scenario 3 — Percentage change on a price drop Current price 190.00, previous close 200.00. Expected output is -5.0%, confirming the formula handles falling prices correctly.
-Scenario 4 — Percentage change with zero previous close Previous close set to zero. Expected output is None, confirming no division by zero occurs.
-Scenario 5 — Alert fires when threshold is breached Percentage change is -6.0% against a threshold of 5.0%. Expected output is an alert object with type set to drop.
-Scenario 6 — No alert below threshold Percentage change is -2.0% and SMA deviation is -1.0%, both within thresholds. Expected output is None.
-Scenario 7 — Severity downgraded for market-wide move Percentage change is -6.0% and sector ETF also fell -5.5%. Expected output is a downgraded severity level.
-Scenario 8 — Company-specific alert flagged correctly Percentage change is -6.0% but sector ETF only fell -0.3%. Expected output is context reading company-specific move.
-Scenario 9 — CSV report created with correct data A session summary with one ticker row is passed to the File Writer. Expected output is a timestamped CSV in the output directory with correct values.
-Scenario 10 — Yahoo Finance returns None for invalid ticker Mocked response returns no price data. Expected output is that the ticker is skipped without crashing.
-Scenario 11 — FRED API returns None on network failure A network exception is raised. Expected output is that the indicator is set to None and the session continues.
-Scenario 12 — Alert tool handles None calculator values All calculator values are None due to insufficient history. Expected output is no alert and no crash.
-
-
-
-Deployment Preparation
-The system runs locally from the command line with no server or database required. To deploy on any machine three steps are needed.
-Install dependencies:
-bash
+```bash
 pip install -r requirements.txt
-Create the environment file:
-bash
+```
+
+### 2. Configure environment variables
+
+Copy the template and fill in your API keys:
+
+```bash
 cp .env.example .env
-Fill in .env with your API keys:
-GEMINI_API_KEY=your_key
-FRED_API_KEY=your_key
-WATCHLIST=AAPL,TSLA,MSFT
+```
+
+Edit `.env`:
+
+```
+GEMINI_API_KEY=your_gemini_api_key
+FRED_API_KEY=your_fred_api_key
+WATCHLIST=AAPL,TSLA,MSFT,GOOGL
 ALERT_THRESHOLD=5.0
 SMA_DEVIATION_THRESHOLD=3.0
 POLL_INTERVAL=300
 OUTPUT_DIR=output
-Run the system:
-bash
+```
+
+- **GEMINI_API_KEY** — from https://aistudio.google.com/app/apikey
+- **FRED_API_KEY** — free key from https://fred.stlouisfed.org/docs/api/api_key.html
+- **WATCHLIST** — comma-separated ticker symbols
+- **ALERT_THRESHOLD** — percentage price change that triggers an alert (default 5.0)
+- **SMA_DEVIATION_THRESHOLD** — percentage deviation from SMA that triggers an alert (default 3.0)
+- **POLL_INTERVAL** — seconds between polling cycles (default 300 = 5 minutes)
+
+---
+
+## Running the System
+
+### Manage your watchlist — add your own stocks or browse trending ones
+
+```bash
+python main.py --watchlist
+```
+
+### Browse stocks by sector and see how they are performing
+
+```bash
+python main.py --sectors
+```
+
+### Single monitoring session — runs once and saves a report
+
+```bash
+python main.py --once
+```
+
+### Continuous monitoring — polls every POLL_INTERVAL seconds
+
+```bash
 python main.py
-The program starts with a greeting and an interactive menu. Reports are saved automatically to the output/ folder.
-Data Conversion and Transformation
-Yahoo Finance returns raw JSON through yfinance. Live price data is extracted and converted to rounded floats stored in Python dictionaries. Historical data arrives as a pandas DataFrame which is flattened, cleaned with dropna(), and converted to a plain Python list of floats for the Calculator.
-FRED returns JSON with an observations array. The most recent value is extracted as a string and converted to a float. Invalid entries return None.
-Before each Gemini call, live prices, historical data, macro indicators, and sector ETF returns are merged into a single dictionary and serialised to JSON using json.dumps(). Gemini's response returns as plain text and is stored directly in the session summary.
-At the end of each session the summary is written to CSV using csv.DictWriter. Each dictionary becomes one row, booleans write as True or False, and None values appear as empty cells. CSV was chosen because it opens directly in Excel with no conversion needed.
-<img width="468" height="642" alt="image" src="https://github.com/user-attachments/assets/1c90d294-64cb-4a2b-9b3f-05d266c4bdf4" />
+```
 
-# FINAL DESCRIPTION – FINAL REPORT (22/05)
-System Description and Goal
-The Stock Monitoring Agent is a Python-based AI-assisted system that monitors live stock prices, calculates moving averages, evaluates alerts, and provides conversational AI analysis of market data. The goal is to give an individual user a single tool that covers everything from browsing the market to monitoring a personal portfolio and getting AI-powered insight, without needing multiple separate applications.
-The system grew significantly during development beyond the original scope. It began as a monitoring loop that fetched prices and saved reports. During implementation a watchlist manager was added so users can add stocks themselves, a sector browser was added to explore ten market sectors with live performance data, a trending stocks view was added showing the biggest movers across the market, an AI chat mode was added for portfolio conversations, and a stock search chat was added so users can ask about any stock on the market by name or ticker and receive live prices alongside AI analysis. The system starts with an interactive menu rather than jumping straight into monitoring, and greets the user on startup.
+### Interactive AI chat — ask Gemini about your portfolio
 
-Programming Concepts and Their Usage
-Functions wrap every tool into a single-purpose reusable block. Examples include get_live_prices(), calculate_sma(), evaluate_alert(), write_report(), run_stock_search_chat(), and fetch_stock_data(). The agent calls these in sequence each session.
-APIs are used at four points. yfinance fetches live prices, historical data, and sector ETF returns from Yahoo Finance. requests calls the FRED REST API for macroeconomic indicators. google-genai calls the Gemini 2.5 Pro API for stock analysis and chat. Yahoo Finance requires no key, FRED provides a free key, and Gemini requires a billing account.
-Classes and dictionaries are used throughout. The Config class centralises all settings loaded from the .env file. Dictionaries represent each ticker's state and are passed between tools as the primary data structure.
-Error handling uses try/except around every external call. Invalid tickers are skipped, API failures set values to None, and deprecated model names are caught and reported without stopping the session.
-Environment variables store all credentials in .env using python-dotenv. The watchlist manager writes changes back to .env using set_key() so updates persist across sessions.
-Conditionals drive the Alert Tool threshold logic and the severity downgrade when a sector ETF moves similarly to the stock. They also power the company name to ticker mapping in the stock search chat.
-String formatting uses f-strings for alert messages, report filenames, console output, and price display cards throughout the system.
+```bash
+python main.py --chat
+```
 
-Tools and Their Role
-Yahoo Finance API — fetches live prices, 30-day historical closing data, and sector ETF returns. Entry point for all market data.
-FRED API — fetches the federal funds rate, CPI, and 10-year Treasury yield once per session. Provides macroeconomic context for AI interpretation.
-Calculator Tool — computes the 20-day simple moving average, percentage change from previous close, and deviation from the moving average for each ticker.
-Alert Tool — evaluates computed values against user-defined thresholds. Fires alerts with severity levels of low, medium, or high. Downgrades severity when the sector ETF moved similarly, indicating a market-wide move.
-File Writer — saves a timestamped CSV report at the end of each session containing all price data, calculator output, macro indicators, and alert results.
-Sector Viewer — lets the user browse ten market sectors, see live performance for every stock in the sector, compare against the sector ETF benchmark, and add stocks to their watchlist.
-Trending Stocks — fetches and displays the most actively watched stocks across major sectors sorted by today's biggest movers.
-Stock Search Chat — AI-powered chat where the user asks about any stock by name or ticker. Fetches live prices and displays a full price card before passing data to Gemini for contextual analysis.
-Gemini 2.5 Pro — provides contextual interpretation of price movements in the monitoring session and powers both the portfolio chat and the stock search chat.
+---
 
-Testing Results and Conclusions
-All 33 automated tests pass consistently. Live integration testing confirmed the full pipeline runs correctly — FRED macroeconomic data is fetched, Yahoo Finance returns live prices and historical data, the Calculator produces correct moving averages and percentage changes, the Alert Tool fires at the right thresholds with correct severity, and the File Writer saves complete CSV reports.
-Several real errors were encountered and resolved during live testing. Yahoo Finance changed its DataFrame column structure between library versions, which required updating the historical price extraction to handle MultiIndex columns. The google.generativeai package was deprecated mid-project and required switching to google-genai with a different client initialisation pattern. Multiple Gemini model names became unavailable to new users and required updating to gemini-2.5-pro. The stock search chat initially extracted common English words as tickers, which was fixed by adding a company name dictionary and an exclusion list.
-These real errors encountered and resolved during development demonstrate that the testing process was meaningful and connected to actual implementation rather than theoretical.
+## Running the Tests
 
-Deployment Preparation
-The system requires Python 3.11 or higher. Install dependencies with pip install -r requirements.txt, configure the .env file with API keys, and run with python main.py. The program greets the user and presents an interactive menu with seven options. No server, database, or cloud infrastructure is required. Reports save automatically to the output/ folder which is created on first run.
+```bash
+pytest tests/test_system.py -v
+```
 
-Deployment Strategy
-The current system is a local command-line application suitable for an individual user. Three deployment paths would be appropriate as the system grows.
-The first is packaging it as a standalone installable tool using pyproject.toml and publishing to PyPI, allowing any user to install it with pip install stock-monitor without cloning a repository.
-The second is deploying the monitoring session as a scheduled cloud job on AWS Lambda or Google Cloud Run, triggering every five minutes automatically and sending alerts via email or SMS rather than printing to the console. Reports would be saved to cloud storage such as S3.
-The third is exposing the system as a web API using FastAPI, turning the watchlist manager, sector viewer, and chat modes into HTTP endpoints that a web frontend or mobile app could call. This would support multiple users with separate watchlists without needing Python installed locally.
-For any of these paths a staged release approach is appropriate: develop and test locally, deploy to a staging environment with a limited watchlist, then release to production. The existing test suite would run automatically via GitHub Actions before any deployment is triggered. Environment variables would continue to manage all credentials across environments.
+All 33 tests should pass. Tests are fully isolated — no live API calls are
+made during testing. Yahoo Finance and FRED calls are mocked using
+`unittest.mock`.
 
+---
 
-<img width="451" height="686" alt="image" src="https://github.com/user-attachments/assets/1495faad-1336-4067-ba3b-92223ef4a89a" />
+## How the System Works
 
+Each monitoring session runs in this order:
+
+1. **FRED API** is called once to fetch the federal funds rate, CPI, and
+   10-year Treasury yield.
+
+2. **Yahoo Finance** fetches live prices and 30-day closing history for
+   every ticker on the watchlist.
+
+3. For each ticker, the **sector ETF return** is fetched from Yahoo Finance
+   (e.g. XLK for Technology stocks) to provide market context.
+
+4. A **JSON payload** is assembled combining all three data sources and sent
+   to **Gemini AI**, which returns a 2-3 sentence contextual interpretation
+   of the price movement.
+
+5. The **Calculator Tool** computes the 20-day SMA, percentage change from
+   the previous close, and deviation of the current price from the SMA.
+
+6. The **Alert Tool** evaluates the computed values against the user's
+   thresholds. If a threshold is breached, it fires an alert with a severity
+   level of low, medium, or high. Severity is downgraded when the sector ETF
+   moved similarly, indicating a market-wide move rather than a
+   company-specific event.
+
+7. The **File Writer** saves a timestamped CSV report to the output directory
+   containing one row per ticker with all price data, calculator output,
+   macro indicators, and alert results.
+
+---
+
+## Additional Features
+
+### Watchlist Manager
+Add stocks manually by ticker symbol, browse and add from a live trending
+stocks list, or remove stocks. Changes are saved to the `.env` file and
+used automatically the next time the system runs.
+
+### Sector Viewer
+Browse 10 market sectors — Technology, Finance, Healthcare, Energy, Electric
+Vehicles, E-Commerce, Entertainment, Real Estate, Consumer Goods, and
+Industrials. Each sector shows live prices, percentage change, sector ETF
+benchmark return, and a performance rating for every stock. Stocks can be
+added directly to your watchlist from the sector view.
+
+### AI Chat Mode
+Ask Gemini questions about your portfolio in plain English. The chat mode
+loads live stock data at startup and uses it as context for every answer.
+Type `refresh` to update the data mid-conversation or `quit` to exit.
+
+Example questions:
+- Which stocks are performing well today?
+- Which stocks should I be worried about?
+- Is AAPL a good buy right now?
+- What does the macro environment mean for my portfolio?
+
+---
+
+## Output
+
+Reports are saved to the `output/` directory as:
+
+```
+output/report_2024-01-15_14-30-00.csv
+```
+
+Each row contains:
+
+| Column             | Description                              |
+|--------------------|------------------------------------------|
+| timestamp          | Time of the price fetch                  |
+| ticker             | Stock symbol                             |
+| current_price      | Live price                               |
+| previous_close     | Previous session closing price           |
+| sma_20             | 20-day simple moving average             |
+| pct_change         | % change from previous close             |
+| sma_deviation      | % deviation from SMA                     |
+| sector             | Company sector (e.g. Technology)         |
+| sector_etf         | Corresponding sector ETF (e.g. XLK)     |
+| sector_return      | Sector ETF % return today                |
+| federal_funds_rate | FRED: current federal funds rate         |
+| cpi                | FRED: latest CPI reading                 |
+| treasury_10y       | FRED: 10-year Treasury yield             |
+| alert_triggered    | True/False                               |
+| alert_type         | drop or spike                            |
+| severity           | low / medium / high                      |
+| sector_context     | Company-specific or market-wide          |
+
+---
+
+## Error Handling
+
+- If Yahoo Finance returns no data for a ticker, that ticker is skipped and
+  the session continues for the remaining tickers.
+- If the FRED API is unreachable, macro values are set to None and the
+  session continues without them.
+- If the Gemini API call fails, a fallback message is recorded in the summary
+  and execution continues.
+- All external calls are wrapped in try/except blocks so a single failure
+  never stops the monitoring loop.
+
+---
+
+## Dependencies
+
+- `yfinance` — Yahoo Finance stock data
+- `google-generativeai` — Gemini AI analysis
+- `requests` — FRED API HTTP calls
+- `python-dotenv` — environment variable loading
+- `pytest` — test suite
