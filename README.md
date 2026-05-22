@@ -123,4 +123,46 @@ Before each Gemini call, live prices, historical data, macro indicators, and sec
 At the end of each session the summary is written to CSV using csv.DictWriter. Each dictionary becomes one row, booleans write as True or False, and None values appear as empty cells. CSV was chosen because it opens directly in Excel with no conversion needed.
 <img width="468" height="642" alt="image" src="https://github.com/user-attachments/assets/1c90d294-64cb-4a2b-9b3f-05d266c4bdf4" />
 
+# FINAL DESCRIPTION – FINAL REPORT (22/05)
+System Description and Goal
+The Stock Monitoring Agent is a Python-based AI-assisted system that monitors live stock prices, calculates moving averages, evaluates alerts, and provides conversational AI analysis of market data. The goal is to give an individual user a single tool that covers everything from browsing the market to monitoring a personal portfolio and getting AI-powered insight, without needing multiple separate applications.
+The system grew significantly during development beyond the original scope. It began as a monitoring loop that fetched prices and saved reports. During implementation a watchlist manager was added so users can add stocks themselves, a sector browser was added to explore ten market sectors with live performance data, a trending stocks view was added showing the biggest movers across the market, an AI chat mode was added for portfolio conversations, and a stock search chat was added so users can ask about any stock on the market by name or ticker and receive live prices alongside AI analysis. The system starts with an interactive menu rather than jumping straight into monitoring, and greets the user on startup.
+
+Programming Concepts and Their Usage
+Functions wrap every tool into a single-purpose reusable block. Examples include get_live_prices(), calculate_sma(), evaluate_alert(), write_report(), run_stock_search_chat(), and fetch_stock_data(). The agent calls these in sequence each session.
+APIs are used at four points. yfinance fetches live prices, historical data, and sector ETF returns from Yahoo Finance. requests calls the FRED REST API for macroeconomic indicators. google-genai calls the Gemini 2.5 Pro API for stock analysis and chat. Yahoo Finance requires no key, FRED provides a free key, and Gemini requires a billing account.
+Classes and dictionaries are used throughout. The Config class centralises all settings loaded from the .env file. Dictionaries represent each ticker's state and are passed between tools as the primary data structure.
+Error handling uses try/except around every external call. Invalid tickers are skipped, API failures set values to None, and deprecated model names are caught and reported without stopping the session.
+Environment variables store all credentials in .env using python-dotenv. The watchlist manager writes changes back to .env using set_key() so updates persist across sessions.
+Conditionals drive the Alert Tool threshold logic and the severity downgrade when a sector ETF moves similarly to the stock. They also power the company name to ticker mapping in the stock search chat.
+String formatting uses f-strings for alert messages, report filenames, console output, and price display cards throughout the system.
+
+Tools and Their Role
+Yahoo Finance API — fetches live prices, 30-day historical closing data, and sector ETF returns. Entry point for all market data.
+FRED API — fetches the federal funds rate, CPI, and 10-year Treasury yield once per session. Provides macroeconomic context for AI interpretation.
+Calculator Tool — computes the 20-day simple moving average, percentage change from previous close, and deviation from the moving average for each ticker.
+Alert Tool — evaluates computed values against user-defined thresholds. Fires alerts with severity levels of low, medium, or high. Downgrades severity when the sector ETF moved similarly, indicating a market-wide move.
+File Writer — saves a timestamped CSV report at the end of each session containing all price data, calculator output, macro indicators, and alert results.
+Sector Viewer — lets the user browse ten market sectors, see live performance for every stock in the sector, compare against the sector ETF benchmark, and add stocks to their watchlist.
+Trending Stocks — fetches and displays the most actively watched stocks across major sectors sorted by today's biggest movers.
+Stock Search Chat — AI-powered chat where the user asks about any stock by name or ticker. Fetches live prices and displays a full price card before passing data to Gemini for contextual analysis.
+Gemini 2.5 Pro — provides contextual interpretation of price movements in the monitoring session and powers both the portfolio chat and the stock search chat.
+
+Testing Results and Conclusions
+All 33 automated tests pass consistently. Live integration testing confirmed the full pipeline runs correctly — FRED macroeconomic data is fetched, Yahoo Finance returns live prices and historical data, the Calculator produces correct moving averages and percentage changes, the Alert Tool fires at the right thresholds with correct severity, and the File Writer saves complete CSV reports.
+Several real errors were encountered and resolved during live testing. Yahoo Finance changed its DataFrame column structure between library versions, which required updating the historical price extraction to handle MultiIndex columns. The google.generativeai package was deprecated mid-project and required switching to google-genai with a different client initialisation pattern. Multiple Gemini model names became unavailable to new users and required updating to gemini-2.5-pro. The stock search chat initially extracted common English words as tickers, which was fixed by adding a company name dictionary and an exclusion list.
+These real errors encountered and resolved during development demonstrate that the testing process was meaningful and connected to actual implementation rather than theoretical.
+
+Deployment Preparation
+The system requires Python 3.11 or higher. Install dependencies with pip install -r requirements.txt, configure the .env file with API keys, and run with python main.py. The program greets the user and presents an interactive menu with seven options. No server, database, or cloud infrastructure is required. Reports save automatically to the output/ folder which is created on first run.
+
+Deployment Strategy
+The current system is a local command-line application suitable for an individual user. Three deployment paths would be appropriate as the system grows.
+The first is packaging it as a standalone installable tool using pyproject.toml and publishing to PyPI, allowing any user to install it with pip install stock-monitor without cloning a repository.
+The second is deploying the monitoring session as a scheduled cloud job on AWS Lambda or Google Cloud Run, triggering every five minutes automatically and sending alerts via email or SMS rather than printing to the console. Reports would be saved to cloud storage such as S3.
+The third is exposing the system as a web API using FastAPI, turning the watchlist manager, sector viewer, and chat modes into HTTP endpoints that a web frontend or mobile app could call. This would support multiple users with separate watchlists without needing Python installed locally.
+For any of these paths a staged release approach is appropriate: develop and test locally, deploy to a staging environment with a limited watchlist, then release to production. The existing test suite would run automatically via GitHub Actions before any deployment is triggered. Environment variables would continue to manage all credentials across environments.
+
+
+<img width="451" height="686" alt="image" src="https://github.com/user-attachments/assets/1495faad-1336-4067-ba3b-92223ef4a89a" />
 
