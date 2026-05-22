@@ -26,7 +26,8 @@ stock_agent/
 │   ├── alert.py                 # Tool 4 — threshold evaluation and severity
 │   ├── file_writer.py           # Tool 5 — CSV report writer
 │   ├── sector_viewer.py         # Tool 6 — browse stocks by sector
-│   └── trending_stocks.py      # Tool 7 — popular and trending stocks
+│   └── trending_stocks.py       # Tool 7 — popular and trending stocks
+│   └── stock_chat.py            # Tool 8 — AI-assisted chat about stocks
 ├── tests/
 │   └── test_system.py           # Full test suite (33 tests)
 └── output/                      # Session reports saved here (auto-created)
