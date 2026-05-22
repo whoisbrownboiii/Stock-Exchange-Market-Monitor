@@ -1,0 +1,5 @@
+timestamp,ticker,current_price,previous_close,sma_20,pct_change,sma_deviation,sector,sector_etf,sector_return,federal_funds_rate,cpi,treasury_10y,alert_triggered,alert_type,severity,sector_context
+2026-05-10 22:19:07,AAPL,293.26,287.49,273.21,2.01,7.34,Technology,XLK,3.44,3.64,330.293,4.41,True,spike,low,Market-wide move (sector ETF: +3.4%)
+2026-05-10 22:19:08,TSLA,428.35,411.81,386.76,4.02,10.75,Consumer Cyclical,XLY,0.27,3.64,330.293,4.41,True,spike,low,Company-specific move (sector ETF: +0.3%)
+2026-05-10 22:19:08,MSFT,415.06,420.98,416.14,-1.41,-0.26,Technology,XLK,3.44,3.64,330.293,4.41,False,,,
+2026-05-10 22:19:08,GOOGL,400.71,398.08,357.52,0.66,12.08,Communication Services,XLC,-0.37,3.64,330.293,4.41,True,spike,low,Market-wide move (sector ETF: -0.4%)
